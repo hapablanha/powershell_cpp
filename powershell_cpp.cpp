@@ -2,6 +2,7 @@
 #include <vcclr.h>
 #include <memory>
 #include <powershell_cpp/string.hpp>
+#include <Windows.h>
 
 
 #pragma managed
@@ -72,9 +73,13 @@ namespace ps {
             ps_interpreter->Streams->Error->DataAdded += gcnew EventHandler<DataAddedEventArgs ^>(h, &PSOutHelper::OnDataAddedError);
             String ^script_code_m = gcnew String(script_code.c_str());
             ps_interpreter->AddScript(script_code_m);
-            auto result = ps_interpreter->Invoke();
-            for each(PSObject ^ps_object in result)
-                Console::WriteLine(ps_object);
+            auto async_ps = ps_interpreter->BeginInvoke();
+			while ((int)(ps_interpreter->InvocationStateInfo->State) != 4) {
+				Sleep(1000);
+			}
+			auto result = ps_interpreter->EndInvoke(async_ps);
+			for each(PSObject ^ps_object in result)
+				Console::WriteLine(ps_object);
         }
 
     private:
